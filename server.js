@@ -56,9 +56,9 @@ app.get('/usuarios', async (req, res) => {
   }
 });
 
-// Criar novo usuário
+// Criar novo usuário com validação de nome e telefone
 app.post('/usuarios', async (req, res) => {
-  const { nome, telefone, senha } = req.body;
+  let { nome, telefone, senha } = req.body;
 
   if (!nome || !telefone || !senha) {
     return res.status(400).json({ 
@@ -66,33 +66,47 @@ app.post('/usuarios', async (req, res) => {
     });
   }
 
+  // Formatar nome (primeira letra de cada palavra maiúscula)
+  nome = nome
+    .toLowerCase()
+    .replace(/\b\w/g, char => char.toUpperCase())
+    .trim();
+
+  // Remover caracteres não numéricos do telefone
+  telefone = telefone.replace(/\D/g, '');
+
+  // Validar telefone: deve ter 10 ou 11 dígitos (DDD + número)
+  if (!/^(\d{10}|\d{11})$/.test(telefone)) {
+    return res.status(400).json({ 
+      error: 'Telefone inválido. Use DDD seguido de 8 ou 9 dígitos, ex: 11912345678'
+    });
+  }
+
   try {
-    // Criptografar senha antes de armazenar
     const hash = await bcrypt.hash(senha, saltRounds);
-    
+
     const [result] = await connection.promise().query(
       'INSERT INTO usuarios (nome, telefone, senha) VALUES (?, ?, ?)',
       [nome, telefone, hash]
     );
-    
-    const novoUsuario = {
+
+    res.status(201).json({
       id: result.insertId,
       nome,
       telefone,
       status: 1
-    };
-    
-    res.status(201).json(novoUsuario);
+    });
   } catch (err) {
     console.error(err);
-    
+
     if (err.code === 'ER_DUP_ENTRY') {
       return res.status(400).json({ error: 'Telefone já cadastrado' });
     }
-    
+
     res.status(500).json({ error: 'Erro ao criar usuário' });
   }
 });
+
 
 // Atualizar status do usuário
 app.patch('/usuarios/:id/status', async (req, res) => {
