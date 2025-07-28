@@ -171,6 +171,7 @@ app.post('/login', async (req, res) => {
   }
 });
 
+// rota put para editar usuarios
 app.put('/usuarios/:id', async (req, res) => {
   const { id } = req.params;
   const { nome, telefone, senha } = req.body;
@@ -194,6 +195,27 @@ app.put('/usuarios/:id', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Erro ao atualizar usuário' });
+  }
+});
+
+// Excluir usuário
+app.delete('/usuarios/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const [result] = await connection.promise().query(
+      'DELETE FROM usuarios WHERE id = ?',
+      [id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Usuário não encontrado' });
+    }
+
+    res.json({ message: 'Usuário excluído com sucesso' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Erro ao excluir usuário' });
   }
 });
 
