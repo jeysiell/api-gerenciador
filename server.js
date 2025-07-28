@@ -171,6 +171,33 @@ app.post('/login', async (req, res) => {
   }
 });
 
+app.put('/usuarios/:id', async (req, res) => {
+  const { id } = req.params;
+  const { nome, telefone, senha } = req.body;
+
+  try {
+    let hash;
+    if (senha) {
+      hash = await bcrypt.hash(senha, saltRounds);
+    }
+
+    const [result] = await connection.promise().query(
+      'UPDATE usuarios SET nome = ?, telefone = ?, senha = ? WHERE id = ?',
+      [nome, telefone, hash || null, id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Usuário não encontrado' });
+    }
+
+    res.json({ id, nome, telefone });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Erro ao atualizar usuário' });
+  }
+});
+
+
 // Atualizar dados do usuário
 app.patch('/usuarios/:id', async (req, res) => {
   const { id } = req.params;
