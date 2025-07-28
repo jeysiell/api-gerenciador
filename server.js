@@ -47,7 +47,7 @@ app.get('/', (req, res) => {
 app.get('/usuarios', async (req, res) => {
   try {
     const [results] = await connection.promise().query(
-      'SELECT id, nome, telefone, status FROM usuarios WHERE status = 1'
+      'SELECT id, nome, telefone, status FROM usuarios'
     );
     res.json(results);
   } catch (err) {
