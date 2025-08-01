@@ -130,6 +130,28 @@ app.patch('/usuarios/:id/status', async (req, res) => {
   }
 });
 
+app.put('/usuarios/:id/status', async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+
+  try {
+    const [result] = await connection.promise().query(
+      'UPDATE usuarios SET status = ? WHERE id = ?',
+      [status, id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Usuário não encontrado' });
+    }
+
+    res.json({ id, status });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Erro ao atualizar status' });
+  }
+});
+
+
 // Rota de login
 app.post('/login', async (req, res) => {
   const { telefone, senha } = req.body;
