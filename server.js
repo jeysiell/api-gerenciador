@@ -2,7 +2,10 @@ const express = require('express');
 const mysql = require('mysql2');
 const cors = require('cors');
 const bcrypt = require('bcrypt');
+const path = require('path');
 require('dotenv').config();
+
+
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -10,6 +13,9 @@ const saltRounds = 10;
 
 // Configuração do CORS
 app.use(cors());
+
+// Serve arquivos estáticos da pasta public
+app.use('/perfis', express.static(path.join(__dirname, 'public/perfis')));
 
 // Configuração do banco de dados
 const connection = mysql.createPool({
@@ -49,12 +55,20 @@ app.get('/usuarios', async (req, res) => {
     const [results] = await connection.promise().query(
       'SELECT id, nome, telefone, status FROM usuarios'
     );
-    res.json(results);
+
+    // Adiciona a url da imagem de perfil (ou imagem padrão caso não exista)
+    const usuariosComFoto = results.map(u => ({
+      ...u,
+      fotoUrl: `/perfis/${u.id}.jpg` // pode ajustar extensão conforme seu arquivo
+    }));
+
+    res.json(usuariosComFoto);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Erro ao buscar usuários' });
   }
 });
+
 
 // Criar novo usuário com validação de nome e telefone
 app.post('/usuarios', async (req, res) => {
